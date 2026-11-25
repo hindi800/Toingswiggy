@@ -719,6 +719,7 @@
   .combo-price { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, #00B85C 0%, #009447 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
   .combo-btn { padding: 8px 14px; border-radius: 10px; border: none; background: linear-gradient(135deg, #00B85C 0%, #009447 100%); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 3px 10px rgba(0,184,92,0.28); }
   .combo-btn:active { transform: scale(0.96); }
+  .combo-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   /* UPI MODAL */
   .upi-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
@@ -757,6 +758,40 @@
   .user-stat-label { font-size: 10px; color: #6B6B6B; margin-top: 2px; }
   .user-action-btn { display: block; width: 100%; padding: 11px; border-radius: 10px; background: var(--green-gradient); color: #fff; border: none; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
   .user-action-btn:active { transform: scale(0.98); }
+
+  /* UTR SCREEN STYLES */
+  .upi-screen { animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .utr-input {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 2px;
+    font-family: 'SF Mono', Monaco, monospace;
+    color: #1A1A1A;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .utr-input:focus { outline: none; border-color: #00C853; }
+  .utr-error { font-size: 11px; color: #E23744; margin-bottom: 10px; text-align: center; }
+  .upi-back {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #6B6B6B;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 8px;
+  }
+  .upi-pending-icon { font-size: 48px; margin-bottom: 10px; animation: pendingPulse 1.5s infinite; }
+  @keyframes pendingPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 </style>
 </head>
 <body>
@@ -1091,7 +1126,7 @@
       <span>·</span>
       <a href="javascript:void(0)" onclick="showToast('Privacy: We only store Telegram ID for purchase tracking')">Privacy</a>
       <span>·</span>
-      <a href="javascript:void(0)" onclick="showToast('Support: Contact via Telegram @YourSupport')">Support</a>
+      <a href="javascript:void(0)" onclick="showToast('Support: Contact via Telegram @toingstoreadminbot')">Support</a>
     </div>
     <div class="footer-copy">© 2025 Toing &amp; Swiggy Bot Store · Made with ❤️ in India</div>
   </div>
@@ -1099,7 +1134,7 @@
 </div>
 
 <!-- SUPPORT FAB -->
-<a href="https://t.me/YourSupportUsername" target="_blank" class="support-fab" onclick="event.stopPropagation();">
+<a href="javascript:void(0)" onclick="openSupport(event)" class="support-fab">
   <span>💬</span>
   <span class="fab-label">Support</span>
 </a>
@@ -1125,7 +1160,7 @@
         <div class="user-stat-label">Saved</div>
       </div>
     </div>
-    <button class="user-action-btn" onclick="closeUserModal(); showToast('Share this store with friends!');">📤 Share Store</button>
+    <button class="user-action-btn" onclick="closeUserModal(); shareStore();">📤 Share Store</button>
   </div>
 </div>
 
@@ -1133,18 +1168,47 @@
 <div class="upi-modal" id="upiModal">
   <div class="upi-modal-content">
     <button class="upi-close" onclick="closeUpiModal()">×</button>
-    <div class="upi-title" id="upiTitle">Buy Bot</div>
-    <div class="upi-amount" id="upiAmount">₹199</div>
-    <div class="upi-qr-wrap"><div id="upiQr"></div></div>
-    <div class="upi-pay-direct">Or tap below if QR doesn't work 👇</div>
-    <div class="upi-id-row">
-      <span class="upi-id-label">UPI ID</span>
-      <span class="upi-id-value" id="upiIdValue">shaikhdemo@fam</span>
-      <button class="upi-copy" onclick="copyUpiId()">Copy</button>
+    
+    <!-- SCREEN 1: Payment -->
+    <div class="upi-screen" id="upiScreenPay">
+      <div class="upi-title" id="upiTitle">Buy Bot</div>
+      <div class="upi-amount" id="upiAmount">₹199</div>
+      <div class="upi-qr-wrap"><div id="upiQr"></div></div>
+      <div class="upi-pay-direct">Or tap below if QR doesn't work 👇</div>
+      <div class="upi-id-row">
+        <span class="upi-id-label">UPI ID</span>
+        <span class="upi-id-value" id="upiIdValue">shaikhdemo@fam</span>
+        <button class="upi-copy" onclick="copyUpiId()">Copy</button>
+      </div>
+      <a class="upi-pay-btn" id="upiPayBtn" href="#" target="_blank">Open UPI App to Pay</a>
+      <div class="upi-note">💡 If QR shows invalid, use 'Open UPI App' button. After paying, tap below.</div>
+      <button class="upi-confirm" onclick="showUtrScreen()">✅ I have paid — Enter UTR</button>
     </div>
-    <a class="upi-pay-btn" id="upiPayBtn" href="#" target="_blank">Open UPI App to Pay</a>
-    <div class="upi-note">💡 If QR shows invalid, use 'Open UPI App' button — it opens your UPI app with amount pre-filled. After paying, tap "I have paid".</div>
-    <button class="upi-confirm" id="upiConfirm" onclick="confirmUpiPayment()">✅ I have paid</button>
+    
+    <!-- SCREEN 2: UTR Entry -->
+    <div class="upi-screen" id="upiScreenUtr" style="display:none;">
+      <div class="upi-title">Verify Payment</div>
+      <div class="upi-amount" id="upiAmountUtr">₹199</div>
+      <div class="upi-note" style="margin-bottom:14px;text-align:left;">
+        Open your UPI app → check payment history → find the <strong>12-digit UTR / Transaction ID</strong> → paste it below.
+      </div>
+      <input type="tel" id="utrInput" class="utr-input" placeholder="123456789012" maxlength="12" inputmode="numeric" autocomplete="off">
+      <div class="utr-error" id="utrError" style="display:none;">Please enter a valid 12-digit UTR</div>
+      <button class="upi-confirm" onclick="submitUtr()">🔍 Submit for Verification</button>
+      <button class="upi-back" onclick="showPayScreen()">← Back to Payment</button>
+    </div>
+    
+    <!-- SCREEN 3: Pending -->
+    <div class="upi-screen" id="upiScreenPending" style="display:none;">
+      <div class="upi-pending-icon">⏳</div>
+      <div class="upi-title">Verification Pending</div>
+      <div class="upi-note" style="margin-bottom:14px;">
+        Admin is verifying your payment. This usually takes 5-10 minutes.<br><br>
+        You'll receive a <strong>Telegram message</strong> with your bot link once verified.
+      </div>
+      <button class="upi-confirm" onclick="closeUpiModal()">Got it</button>
+    </div>
+    
   </div>
 </div>
 
@@ -1166,9 +1230,20 @@
     PRICE_TOING: 199,
     PRICE_SWIGGY: 199,
     PRICE_COMBO: 299,
+    
+    // 🎯 ADMIN BOT (YOUR CREDENTIALS)
+    BOT_TOKEN: '9032273740:AAGTWc8tSOvD0PxGLcrD4XzB5g4_Ls14JBg',
+    ADMIN_CHAT_ID: '6657235468',
+    
+    // Delivery URLs (bot links user receives after approval)
     TOING_DELIVERY_URL: 'https://t.me/YourToingBotDeliveryBot?start=toing_license',
     SWIGGY_DELIVERY_URL: 'https://t.me/YourSwiggyBotDeliveryBot?start=swiggy_license',
-    COMBO_DELIVERY_URL: 'https://t.me/YourComboDeliveryBot?start=combo_license'
+    COMBO_DELIVERY_URL: 'https://t.me/YourComboDeliveryBot?start=combo_license',
+    
+    // Support bot username (for FAB)
+    SUPPORT_URL: 'https://t.me/toingstoreadminbot',
+    
+    VERIFY_TIMEOUT: 600000  // 10 minutes
   };
 
   /* ============ TELEGRAM INIT ============ */
@@ -1216,36 +1291,53 @@
   /* ============ TELEGRAM USER ============ */
   function initTelegramUser() {
     const user = tg?.initDataUnsafe?.user;
-    if (user) {
-      const name = (user.first_name || '') + (user.last_name ? ' ' + user.last_name : '');
-      const username = user.username ? '@' + user.username : 'TG User';
+    if (user && user.id) {
+      const name = ((user.first_name || '') + (user.last_name ? ' ' + user.last_name : '')).trim() || 'Telegram User';
+      const username = user.username ? '@' + user.username : '@user' + user.id;
       const pic = user.photo_url || '';
-      document.getElementById('profileName').textContent = name.trim() || 'Telegram User';
-      document.getElementById('profileTag').textContent = username;
-      if (pic) {
-        const img = document.getElementById('profilePic');
-        img.src = pic;
-        img.style.display = 'block';
-        document.getElementById('profileAvatar').style.display = 'none';
+      
+      const nameEl = document.getElementById('profileName');
+      const tagEl = document.getElementById('profileTag');
+      const picEl = document.getElementById('profilePic');
+      const avatarEl = document.getElementById('profileAvatar');
+      
+      if (nameEl) nameEl.textContent = name;
+      if (tagEl) tagEl.textContent = username;
+      
+      if (pic && picEl) {
+        picEl.src = pic;
+        picEl.style.display = 'block';
+        if (avatarEl) avatarEl.style.display = 'none';
       }
-      localStorage.setItem('tg_user', JSON.stringify({ id: user.id, name: name.trim(), username: user.username || '', pic: pic }));
+      
+      localStorage.setItem('tg_user', JSON.stringify({
+        id: user.id,
+        name: name,
+        username: user.username || '',
+        pic: pic
+      }));
     } else {
+      // Try cached
       const cached = localStorage.getItem('tg_user');
       if (cached) {
         try {
           const u = JSON.parse(cached);
-          document.getElementById('profileName').textContent = u.name || 'User';
-          document.getElementById('profileTag').textContent = u.username ? '@' + u.username : 'TG User';
+          const nameEl = document.getElementById('profileName');
+          const tagEl = document.getElementById('profileTag');
+          if (nameEl) nameEl.textContent = u.name || 'User';
+          if (tagEl) tagEl.textContent = u.username ? '@' + u.username : 'TG User';
           if (u.pic) {
-            const img = document.getElementById('profilePic');
-            img.src = u.pic;
-            img.style.display = 'block';
-            document.getElementById('profileAvatar').style.display = 'none';
+            const picEl = document.getElementById('profilePic');
+            const avatarEl = document.getElementById('profileAvatar');
+            if (picEl) { picEl.src = u.pic; picEl.style.display = 'block'; }
+            if (avatarEl) avatarEl.style.display = 'none';
           }
         } catch(e) {}
       } else {
-        document.getElementById('profileName').textContent = 'Guest';
-        document.getElementById('profileTag').textContent = 'Tap to open in Telegram';
+        const nameEl = document.getElementById('profileName');
+        const tagEl = document.getElementById('profileTag');
+        if (nameEl) nameEl.textContent = 'Guest';
+        if (tagEl) tagEl.textContent = 'Open in Telegram';
       }
     }
   }
@@ -1253,10 +1345,7 @@
   function showProfile() {
     haptic('tap');
     const user = tg?.initDataUnsafe?.user;
-    if (!user) {
-      showToast('Open in Telegram to sync profile');
-      return;
-    }
+    if (!user) { showToast('Open in Telegram to sync profile'); return; }
     const wrap = document.getElementById('userModalAvatarWrap');
     if (user.photo_url) {
       wrap.innerHTML = '<img src="' + user.photo_url + '" class="user-avatar-big" alt="">';
@@ -1266,7 +1355,7 @@
     document.getElementById('userModalName').textContent = (user.first_name || '') + (user.last_name ? ' ' + user.last_name : '');
     document.getElementById('userModalUsername').textContent = user.username ? '@' + user.username : 'Telegram User';
     let count = 0;
-    ['toing', 'swiggy', 'combo'].forEach(p => { if (localStorage.getItem('purchased_' + p) === 'true') count++; });
+    ['toing', 'swiggy', 'combo'].forEach(p => { if (localStorage.getItem('verified_' + p) === 'true') count++; });
     document.getElementById('userStatBots').textContent = count;
     document.getElementById('userStatOrders').textContent = count * 12;
     document.getElementById('userStatSaved').textContent = '₹' + (count * 150);
@@ -1277,10 +1366,21 @@
     haptic('tap');
   }
 
+  /* ============ SUPPORT ============ */
+  function openSupport(event) {
+    if (event) event.stopPropagation();
+    haptic('tap');
+    const supportUrl = CONFIG.SUPPORT_URL;
+    if (tg?.openTelegramLink) {
+      try { tg.openTelegramLink(supportUrl); return; } catch(e) {}
+    }
+    window.open(supportUrl, '_blank');
+  }
+
   /* ============ SHARE ============ */
   function shareStore() {
     haptic('medium');
-    const text = '🚀 Get Toing & Swiggy clone bots for just ₹199 — 100% working, instant access! ' + window.location.href;
+    const text = '🚀 Get Toing & Swiggy bots for just ₹199 — 100% working, instant access! ' + window.location.href;
     if (navigator.share) {
       navigator.share({ title: 'Toing & Swiggy Bot Store', text: text, url: window.location.href }).catch(() => {});
     } else if (tg?.openTelegramLink) {
@@ -1305,83 +1405,209 @@
     return 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=10&data=' + encodeURIComponent(upiLink);
   }
   let purchasing = false;
+  
   function buyProduct(product) {
     haptic('medium');
-    if (localStorage.getItem('purchased_' + product) === 'true') {
-      showToast('Already purchased');
+    
+    // Already verified?
+    if (localStorage.getItem('verified_' + product) === 'true') {
+      showToast('Already verified! Access below.');
       revealSuccess(product);
       return;
     }
+    
+    // Pending verification?
+    const pending = localStorage.getItem('pending_' + product);
+    if (pending) {
+      try {
+        const p = JSON.parse(pending);
+        if (Date.now() - p.timestamp < CONFIG.VERIFY_TIMEOUT) {
+          document.getElementById('upiModal').dataset.product = product;
+          showPendingScreen();
+          document.getElementById('upiModal').classList.add('visible');
+          return;
+        } else {
+          localStorage.removeItem('pending_' + product);
+        }
+      } catch(e) { localStorage.removeItem('pending_' + product); }
+    }
+    
     purchasing = true;
+    document.getElementById('upiModal').dataset.product = product;
+    
     const amounts = { toing: CONFIG.PRICE_TOING, swiggy: CONFIG.PRICE_SWIGGY, combo: CONFIG.PRICE_COMBO };
     const titles = { toing: 'Toing Bot', swiggy: 'Swiggy Bot', combo: 'Toing + Swiggy Combo' };
     const amount = amounts[product];
     const note = titles[product];
     const upiLink = buildUpiLink(amount, note);
+    
     document.getElementById('upiTitle').textContent = 'Buy ' + titles[product];
     document.getElementById('upiAmount').textContent = '₹' + amount;
+    document.getElementById('upiAmountUtr').textContent = '₹' + amount;
     document.getElementById('upiQr').innerHTML = '<img src="' + buildQrUrl(upiLink) + '" alt="UPI QR">';
     document.getElementById('upiPayBtn').href = upiLink;
     document.getElementById('upiPayBtn').textContent = 'Open UPI App to Pay ₹' + amount;
-    document.getElementById('upiConfirm').dataset.product = product;
     document.getElementById('upiIdValue').textContent = CONFIG.UPI_ID;
+    
+    showPayScreen();
     document.getElementById('upiModal').classList.add('visible');
   }
+  
+  function showPayScreen() {
+    document.getElementById('upiScreenPay').style.display = 'block';
+    document.getElementById('upiScreenUtr').style.display = 'none';
+    document.getElementById('upiScreenPending').style.display = 'none';
+  }
+  
+  function showUtrScreen() {
+    haptic('tap');
+    document.getElementById('upiScreenPay').style.display = 'none';
+    document.getElementById('upiScreenUtr').style.display = 'block';
+    document.getElementById('upiScreenPending').style.display = 'none';
+    document.getElementById('utrInput').value = '';
+    document.getElementById('utrError').style.display = 'none';
+    setTimeout(() => document.getElementById('utrInput').focus(), 100);
+  }
+  
+  function showPendingScreen() {
+    document.getElementById('upiScreenPay').style.display = 'none';
+    document.getElementById('upiScreenUtr').style.display = 'none';
+    document.getElementById('upiScreenPending').style.display = 'block';
+  }
+  
+  function submitUtr() {
+    const utr = document.getElementById('utrInput').value.trim();
+    const product = document.getElementById('upiModal').dataset.product;
+    
+    if (!/^\d{12}$/.test(utr)) {
+      document.getElementById('utrError').style.display = 'block';
+      haptic('error');
+      return;
+    }
+    document.getElementById('utrError').style.display = 'none';
+    haptic('medium');
+    
+    const user = tg?.initDataUnsafe?.user || {};
+    const userName = ((user.first_name || '') + (user.last_name ? ' ' + user.last_name : '')).trim() || 'User';
+    const userUsername = user.username ? '@' + user.username : 'no username';
+    const userId = user.id || 'unknown';
+    
+    const amounts = { toing: CONFIG.PRICE_TOING, swiggy: CONFIG.PRICE_SWIGGY, combo: CONFIG.PRICE_COMBO };
+    const titles = { toing: 'Toing Bot', swiggy: 'Swiggy Bot', combo: 'Toing + Swiggy Combo' };
+    const amount = amounts[product];
+    const productTitle = titles[product];
+    
+    // Save pending
+    localStorage.setItem('pending_' + product, JSON.stringify({
+      utr, product, amount,
+      timestamp: Date.now(),
+      userId, userName, username: userUsername
+    }));
+    
+    // Save tg_user for backup
+    if (user.id) {
+      localStorage.setItem('tg_user', JSON.stringify({
+        id: user.id,
+        name: userName,
+        username: user.username || '',
+        pic: user.photo_url || ''
+      }));
+    }
+    
+    // Notify admin via Bot API
+    const message = `🔔 *NEW PAYMENT VERIFICATION*\n\n` +
+      `👤 *User:* ${userName}\n` +
+      `📱 *Username:* ${userUsername}\n` +
+      `🆔 *ID:* \`${userId}\`\n\n` +
+      `📦 *Product:* ${productTitle}\n` +
+      `💰 *Amount:* ₹${amount}\n` +
+      `🔢 *UTR:* \`${utr}\`\n\n` +
+      `⏰ *Time:* ${new Date().toLocaleString('en-IN')}\n\n` +
+      `✅ *After verifying in UPI app, send this bot:*\n` +
+      `/approve ${userId} ${product}`;
+    
+    sendAdminNotification(message);
+    
+    showPendingScreen();
+    haptic('success');
+  }
+  
+  function sendAdminNotification(message) {
+    const url = 'https://api.telegram.org/bot' + CONFIG.BOT_TOKEN + '/sendMessage';
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CONFIG.ADMIN_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      console.log('✅ Admin notified:', data.ok);
+      if (!data.ok) {
+        showToast('⚠️ Notification issue. Contact support.');
+      }
+    })
+    .catch(err => {
+      console.error('❌ Admin notify failed:', err);
+      showToast('⚠️ Could not notify admin. Contact support.');
+    });
+  }
+  
   function closeUpiModal() {
     document.getElementById('upiModal').classList.remove('visible');
     purchasing = false;
     haptic('tap');
   }
+  
+  function confirmUpiPayment() {
+    // Legacy - no longer used, kept for safety
+    showUtrScreen();
+  }
+  
+  function handlePaymentSuccess(product) {
+    // Only called after admin verification (via external /approve)
+    haptic('success'); haptic('heavy');
+    localStorage.setItem('verified_' + product, 'true');
+    localStorage.setItem('verified_' + product + '_date', new Date().toISOString());
+    localStorage.removeItem('pending_' + product);
+    revealSuccess(product);
+    showToast('🎉 Payment verified! Access unlocked.');
+  }
+  
+  function revealSuccess(product) {
+    const isVerified = (p) => localStorage.getItem('verified_' + p) === 'true' || localStorage.getItem('verified_combo') === 'true';
+    
+    if (product === 'combo') {
+      ['toing','swiggy'].forEach(p => {
+        if (!isVerified(p)) return;
+        const box = document.getElementById('success-' + p);
+        if (box) box.classList.add('visible');
+        const b = document.getElementById(p === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
+        if (b) { b.disabled = true; b.innerHTML = '✅ Verified'; }
+        const link = document.getElementById('download-' + p);
+        if (link) link.href = p === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.TOING_DELIVERY_URL;
+      });
+      return;
+    }
+    
+    if (!isVerified(product)) return;
+    
+    const box = document.getElementById('success-' + product);
+    if (box) box.classList.add('visible');
+    const btn = document.getElementById(product === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '✅ Verified'; }
+    const link = document.getElementById('download-' + product);
+    if (link) link.href = product === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.TOING_DELIVERY_URL;
+  }
+
+  /* ============ COPY UPI ID ============ */
   function copyUpiId() {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(CONFIG.UPI_ID).then(() => { showToast('UPI ID copied'); haptic('success'); }).catch(() => showToast('Copy failed'));
     } else { showToast('Copy not supported'); }
-  }
-  function confirmUpiPayment() {
-    const product = document.getElementById('upiConfirm').dataset.product;
-    if (!product) return;
-    haptic('medium');
-    document.getElementById('upiModal').classList.remove('visible');
-    handlePaymentSuccess(product);
-  }
-  function handlePaymentSuccess(product) {
-    haptic('success'); haptic('heavy');
-    localStorage.setItem('purchased_' + product, 'true');
-    localStorage.setItem('purchased_' + product + '_date', new Date().toISOString());
-    revealSuccess(product);
-    showToast('🎉 Payment confirmed! Access unlocked.');
-    if (tg && tg.sendData) {
-      try {
-        tg.sendData(JSON.stringify({ action: 'bot_purchase', product: product, method: 'upi', amount_inr: product === 'toing' ? CONFIG.PRICE_TOING : product === 'swiggy' ? CONFIG.PRICE_SWIGGY : CONFIG.PRICE_COMBO, timestamp: Date.now(), status: 'user_confirmed' }));
-      } catch(e) {}
-    }
-    setTimeout(() => {
-      const url = product === 'toing' ? CONFIG.TOING_DELIVERY_URL : product === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.COMBO_DELIVERY_URL;
-      if (tg?.openLink) { try { tg.openLink(url, { try_instant_view: true }); } catch(e) { window.open(url, '_blank'); } }
-      else window.open(url, '_blank');
-    }, 1500);
-    purchasing = false;
-  }
-  function revealSuccess(product) {
-    if (product === 'combo') {
-      ['toing','swiggy'].forEach(p => {
-        const box = document.getElementById('success-' + p);
-        if (box) box.classList.add('visible');
-        const b = document.getElementById(p === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
-        if (b) { b.disabled = true; b.innerHTML = '✅ Purchased in Combo'; }
-        const link = document.getElementById('download-' + p);
-        if (link) link.href = p === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.TOING_DELIVERY_URL;
-      });
-      const cb = document.querySelector('.combo-btn');
-      if (cb) { cb.disabled = true; cb.textContent = '✅ Purchased'; cb.style.opacity = '0.6'; }
-      return;
-    }
-    const box = document.getElementById('success-' + product);
-    if (box) box.classList.add('visible');
-    const btn = document.getElementById(product === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '✅ Purchased'; }
-    const link = document.getElementById('download-' + product);
-    if (link) link.href = product === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.TOING_DELIVERY_URL;
   }
 
   /* ============ LIVE TICKER ============ */
@@ -1398,34 +1624,61 @@
   /* ============ DOMContentLoaded ============ */
   document.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('selected_bot');
-    if (saved === 'swiggy' || saved === 'toing') {
-      selectBot(saved);
-    }
-    ['swiggy', 'toing'].forEach(p => {
-      if (localStorage.getItem('purchased_' + p) === 'true') revealSuccess(p);
+    if (saved === 'swiggy' || saved === 'toing') selectBot(saved);
+    
+    // Restore verified
+    ['toing', 'swiggy', 'combo'].forEach(p => {
+      if (localStorage.getItem('verified_' + p) === 'true') revealSuccess(p);
     });
-    if (localStorage.getItem('purchased_combo') === 'true') revealSuccess('combo');
+    
+    // Show pending state on buttons
+    ['toing', 'swiggy', 'combo'].forEach(p => {
+      const pending = localStorage.getItem('pending_' + p);
+      if (pending) {
+        try {
+          const data = JSON.parse(pending);
+          if (Date.now() - data.timestamp < CONFIG.VERIFY_TIMEOUT) {
+            const btn = document.getElementById(p === 'swiggy' ? 'buySwiggyBtn' : p === 'toing' ? 'buyToingBtn' : null);
+            if (btn) {
+              btn.innerHTML = '⏳ Verification Pending';
+              btn.disabled = true;
+            }
+          } else {
+            localStorage.removeItem('pending_' + p);
+          }
+        } catch(e) { localStorage.removeItem('pending_' + p); }
+      }
+    });
+    
     if (tg?.BackButton) {
       tg.BackButton.onClick(() => tg.close());
       tg.BackButton.hide();
     }
+    
     document.getElementById('upiModal')?.addEventListener('click', function(e) { if (e.target === this) closeUpiModal(); });
     document.getElementById('userModal')?.addEventListener('click', function(e) { if (e.target === this) closeUserModal(); });
-
-    initTelegramUser();
-
+    
     setInterval(() => {
       tickerIndex = (tickerIndex + 1) % tickerMessages.length;
       const el = document.getElementById('liveText');
       if (el) {
         el.style.opacity = '0';
-        setTimeout(() => {
-          el.textContent = tickerMessages[tickerIndex];
-          el.style.opacity = '1';
-        }, 250);
+        setTimeout(() => { el.textContent = tickerMessages[tickerIndex]; el.style.opacity = '1'; }, 250);
       }
     }, 3500);
   });
+  
+  // ⚡ IMMEDIATE TELEGRAM USER INIT
+  function bootTelegramUser() {
+    initTelegramUser();
+    setTimeout(initTelegramUser, 300);
+    setTimeout(initTelegramUser, 1000);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootTelegramUser);
+  } else {
+    bootTelegramUser();
+  }
 
   /* ============ OVERLAY CLICK ============ */
   document.getElementById('overlay').addEventListener('click', function(e) {
