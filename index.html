@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Toing &amp; Swiggy Bot Store</title>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #FFFFFF;
+    --bg-soft: #F8F9FA;
+    --card-bg: #FFFFFF;
+    --card-border: #E8E8E8;
+    --text: #1A1A1A;
+    --text-secondary: #6B6B6B;
+    --orange: #FC8019;
+    --red: #E23744;
+    --gradient: linear-gradient(135deg, #FC8019 0%, #E23744 100%);
+    --success: #2E7D32;
+    --success-bg: #E8F5E9;
+    --success-border: #A5D6A7;
+  }
+  html, body { overflow-x: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+    position: relative;
+  }
+  body::before, body::after { display: none; }
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* [1] STICKY HEADER */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.9);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--orange);
+    white-space: nowrap;
+  }
+  .wallet-btn {
+    background: var(--card-bg);
+    border: 1px solid #E0E0E0;
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .wallet-btn:active { transform: scale(0.96); }
+  .wallet-btn.connected {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success);
+  }
+
+  /* [2] HERO */
+  .hero {
+    text-align: center;
+    padding: 28px 12px 8px;
+  }
+  .hero-logo {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 24px;
+    margin: 0 auto 14px;
+    box-shadow: 0 10px 30px rgba(252,128,25,0.25);
+    display: block;
+  }
+  .hero h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.25;
+  }
+  .hero p {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    max-width: 320px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .badge-pill, .hero-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success);
+    white-space: nowrap;
+  }
+
+  /* [3] SAVINGS CARD */
+  .savings-card, .savings-highlight {
+    background: #FFF4E6;
+    border: 1px solid #FFD9A8;
+    border-radius: 18px;
+    padding: 18px;
+    text-align: center;
+    margin-bottom: 14px;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .savings-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--orange);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .savings-prices {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .savings-new {
+    font-size: 28px;
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .savings-old {
+    font-size: 16px;
+    color: var(--text-secondary);
+    text-decoration: line-through;
+  }
+  .savings-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* [4] STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 18px;
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 3px;
+  }
+  .stat-lbl {
+    font-size: 10px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+  }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin: 28px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: var(--gradient);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .section-title:first-child { margin-top: 18px; }
+  .sub-heading {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-secondary);
+    margin: 20px 0 10px;
+  }
+
+  /* BOT SELECTOR */
+  .bot-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0 16px;
+  }
+  .bot-option {
+    background: #FFFFFF;
+    border: 2px solid #E8E8E8;
+    border-radius: 16px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .bot-option:active { transform: scale(0.97); }
+  .bot-option.active {
+    border-color: #FC8019;
+    box-shadow: 0 6px 20px rgba(252,128,25,0.25);
+    background: linear-gradient(180deg, #FFF9F3 0%, #FFFFFF 100%);
+  }
+  .bot-opt-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    object-fit: cover;
+    margin-bottom: 2px;
+  }
+  .bot-opt-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: #1A1A1A;
+    line-height: 1.2;
+  }
+  .bot-option.active .bot-opt-name {
+    background: linear-gradient(135deg, #FC8019 0%, #E23744 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .bot-opt-price {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6B6B6B;
+  }
+  .bot-option.active .bot-opt-price { color: #FC8019; }
+
+  .bot-panel { display: none; }
+  .bot-panel.active { display: block; animation: panelFadeIn 0.3s ease; }
+  @keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* PRODUCT CARD */
+  .product-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient);
+  }
+  .product-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .product-logo {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+  .product-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .badge-orange {
+    background: rgba(252,128,25,0.12);
+    border: 1px solid rgba(252,128,25,0.3);
+    color: var(--orange);
+  }
+  .badge-red {
+    background: rgba(226,55,68,0.12);
+    border: 1px solid rgba(226,55,68,0.3);
+    color: var(--red);
+  }
+  .product-name, .product-card h2 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 12px 0 6px;
+    line-height: 1.25;
+    color: var(--text);
+  }
+  .product-desc, .product-card > p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .feature-list {
+    list-style: none;
+    margin: 14px 0;
+  }
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.4;
+    padding: 5px 0;
+  }
+  .check {
+    color: var(--success);
+    font-weight: 700;
+    flex-shrink: 0;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-top: 1px solid var(--card-border);
+    margin-top: 6px;
+  }
+  .price-label, .price-lbl {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .price-value, .price-val {
+    font-size: 24px;
+    font-weight: 800;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .buy-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 14px;
+    background: var(--gradient);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(252,128,25,0.3);
+    position: relative;
+    overflow: hidden;
+    margin-top: 6px;
+    transition: transform 0.1s;
+  }
+  .buy-btn:active { transform: scale(0.98); }
+  .buy-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .buy-btn.loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 1.2s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .success-box {
+    display: none;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success);
+  }
+  .success-box.visible { display: block; }
+  .success-box .s-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--success);
+    margin-bottom: 4px;
+  }
+  .success-box .s-sub {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .success-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--orange);
+    text-decoration: none;
+    padding: 10px 14px;
+    background: rgba(252,128,25,0.08);
+    border: 1px solid rgba(252,128,25,0.25);
+    border-radius: 10px;
+    margin-top: 4px;
+  }
+
+  /* PROOF CARDS */
+  .proof-card, .proof-shot {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .proof-img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: 14px;
+    min-height: 200px;
+    background: #F0F0F0;
+  }
+  .proof-video {
+    width: 100%;
+    display: block;
+    border-radius: 14px;
+    background: #F0F0F0;
+    max-height: 400px;
+  }
+  .img-fallback {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 200px;
+    background: #F0F0F0;
+    color: #999;
+    font-size: 32px;
+    gap: 6px;
+  }
+  .img-fallback .fb-label {
+    font-size: 11px;
+    color: #888;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .caption-bar, .proof-shot-caption {
+    background: #FAFAFA;
+    border-top: 1px solid var(--card-border);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .caption-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .caption-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .caption-title, .proof-shot-caption .cap-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .caption-sub, .proof-shot-caption .cap-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+  .caption-badge, .proof-shot-caption .cap-badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success);
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+  }
+
+  /* TESTIMONIALS */
+  .testimonial, .testi {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .t-body { flex: 1; min-width: 0; }
+  .t-name, .testi-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    line-height: 1.3;
+  }
+  .t-text, .testi-text {
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .t-stars, .stars {
+    font-size: 11px;
+    color: var(--orange);
+    letter-spacing: 1px;
+  }
+
+  /* FOOTER */
+  .footer {
+    padding: 24px 0 8px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+  .footer .orange { color: var(--orange); font-weight: 700; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #FFFFFF;
+    border: 1px solid var(--card-border);
+    color: #1A1A1A;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 999;
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* OVERLAY */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 998;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    text-align: center;
+  }
+  .overlay.visible { display: flex; }
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(0,0,0,0.1);
+    border-top-color: #FC8019;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .overlay-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A1A1A;
+  }
+  .overlay-sub {
+    font-size: 12px;
+    color: #6B6B6B;
+  }
+</style>
+</head>
+<body>
+
+<!-- [1] STICKY HEADER -->
+<div class="header">
+  <div class="header-title">🚀 Toing &amp; Swiggy Bot Store</div>
+  <button id="walletBtn" onclick="connectWallet()" class="wallet-btn">Connect Wallet</button>
+</div>
+
+<div class="container">
+
+  <!-- [2] HERO -->
+  <div class="hero">
+    <img src="https://i.imgur.com/Sd9fXzh.jpeg" alt="Toing Logo" style="width:100px; height:100px; object-fit:cover; border-radius:24px; margin:0 auto 14px; box-shadow:0 10px 30px rgba(252,128,25,0.25); display:block;" onerror="this.style.display='none';">
+    <h1>Toing &amp; Swiggy Bots</h1>
+    <p>Ready-made delivery bots. Launch in minutes, earn from day one.</p>
+    <div class="badges">
+      <span class="hero-badge">✅ Verified Proofs</span>
+      <span class="hero-badge">⚡ Instant Delivery</span>
+      <span class="hero-badge">🔒 TON Secure</span>
+    </div>
+  </div>
+
+  <!-- [3] SAVINGS HIGHLIGHT -->
+  <div class="savings-highlight">
+    <div class="label">🔥 Real Verified Savings</div>
+    <div class="savings-prices">
+      <span class="savings-new">₹19</span>
+      <span class="savings-old">₹100</span>
+    </div>
+    <div class="savings-sub">100₹ ka khana sirf 19₹ mai — as seen in live customer orders</div>
+  </div>
+
+  <!-- [4] STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num">₹4.2L+</div>
+      <div class="stat-lbl">Monthly operator revenue</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">12.4K+</div>
+      <div class="stat-lbl">Orders delivered</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">98.7%</div>
+      <div class="stat-lbl">Bot uptime</div>
+    </div>
+  </div>
+
+  <!-- [5] BOT SELECTOR -->
+  <div class="bot-selector">
+    <div class="bot-option active" id="opt-toing" onclick="selectBot('toing')">
+      <img src="https://i.imgur.com/Sd9fXzh.jpeg" class="bot-opt-logo" alt="Toing" onerror="this.style.display='none';">
+      <div class="bot-opt-name">Toing Bot</div>
+      <div class="bot-opt-price">2.0 TON</div>
+    </div>
+    <div class="bot-option" id="opt-swiggy" onclick="selectBot('swiggy')">
+      <img src="https://i.imgur.com/11WL7uf.jpeg" class="bot-opt-logo" alt="Swiggy" onerror="this.style.display='none';">
+      <div class="bot-opt-name">Swiggy Bot</div>
+      <div class="bot-opt-price">1.5 TON</div>
+    </div>
+  </div>
+
+  <!-- [6] TOING PANEL -->
+  <div class="bot-panel active" id="panel-toing">
+    <div class="product-card">
+      <div class="product-header">
+        <img src="https://i.imgur.com/Sd9fXzh.jpeg" alt="Toing" class="product-logo" onerror="this.style.display='none';">
+        <span class="product-badge badge-red">⚡ Hyperlocal</span>
+      </div>
+      <h2 class="product-name">Toing Bot</h2>
+      <p class="product-desc">Blazing-fast hyperlocal delivery bot with Web3-native payments and a stunning UI.</p>
+      <ul class="feature-list">
+        <li><span class="check">✓</span> Lightning-fast dark mode UI</li>
+        <li><span class="check">✓</span> Web3 paywall integration</li>
+        <li><span class="check">✓</span> Parcel drop system with proof-of-delivery</li>
+        <li><span class="check">✓</span> Multi-zone delivery management</li>
+        <li><span class="check">✓</span> Automated earnings &amp; payout reports</li>
+      </ul>
+      <div class="price-row">
+        <span class="price-label">One-time price</span>
+        <span class="price-value">2.0 TON</span>
+      </div>
+      <button class="buy-btn" id="buyToingBtn" onclick="buyProduct('toing')">💎 Buy Toing Bot via TON</button>
+      <div class="success-box" id="success-toing">
+        <div class="s-title">✅ Purchase Confirmed!</div>
+        <div class="s-sub">Your Toing Bot is ready.</div>
+        <a id="download-toing" class="success-link" href="#" target="_blank">🔗 Access Toing Bot Dashboard</a>
+      </div>
+    </div>
+
+    <div class="sub-heading">📸 Toing Proofs</div>
+
+    <!-- Toing Proof 1 (IMAGE) -->
+    <div class="proof-card">
+      <img src="https://i.imgur.com/QgPSvg3.jpeg" loading="lazy" class="proof-img" alt="Toing Proof 1" style="width:100%; display:block; object-fit:cover; border-radius:14px; min-height:200px; background:#F0F0F0;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback" style="display:none; align-items:center; justify-content:center; flex-direction:column; height:200px; background:#F0F0F0; color:#999;">
+        <span>⚡</span>
+        <span class="fb-label">Image unavailable</span>
+      </div>
+      <div class="caption-bar">
+        <div class="caption-icon">⚡</div>
+        <div class="caption-text">
+          <div class="caption-title">Live Bot UI</div>
+          <div class="caption-sub">Web3 paywall active</div>
+        </div>
+        <span class="caption-badge">✓ LIVE</span>
+      </div>
+    </div>
+
+    <!-- Toing Proof 2 (VIDEO) -->
+    <div class="proof-card">
+      <video controls autoplay muted loop playsinline preload="metadata" style="width:100%; display:block; border-radius:14px; background:#F0F0F0; max-height:400px;">
+        <source src="https://i.imgur.com/rW3O93b.mp4" type="video/mp4">
+      </video>
+      <div class="caption-bar">
+        <div class="caption-icon">🎥</div>
+        <div class="caption-text">
+          <div class="caption-title">Live Demo Video</div>
+          <div class="caption-sub">Proof-of-delivery in action</div>
+        </div>
+        <span class="caption-badge">✓ LIVE</span>
+      </div>
+    </div>
+
+    <!-- Toing Proof 3 (IMAGE) -->
+    <div class="proof-card">
+      <img src="https://i.imgur.com/1Y3EXDA.jpeg" loading="lazy" class="proof-img" alt="Toing Proof 3" style="width:100%; display:block; object-fit:cover; border-radius:14px; min-height:200px; background:#F0F0F0;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback" style="display:none; align-items:center; justify-content:center; flex-direction:column; height:200px; background:#F0F0F0; color:#999;">
+        <span>📦</span>
+        <span class="fb-label">Image unavailable</span>
+      </div>
+      <div class="caption-bar">
+        <div class="caption-icon">📦</div>
+        <div class="caption-text">
+          <div class="caption-title">Parcel Drop Log</div>
+          <div class="caption-sub">Proof-of-delivery verified</div>
+        </div>
+        <span class="caption-badge">✓ REAL</span>
+      </div>
+    </div>
+
+    <!-- Toing Proof 4 (IMAGE) -->
+    <div class="proof-card">
+      <img src="https://i.imgur.com/0W0V9vP.jpeg" loading="lazy" class="proof-img" alt="Toing Proof 4" style="width:100%; display:block; object-fit:cover; border-radius:14px; min-height:200px; background:#F0F0F0;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback" style="display:none; align-items:center; justify-content:center; flex-direction:column; height:200px; background:#F0F0F0; color:#999;">
+        <span>📊</span>
+        <span class="fb-label">Image unavailable</span>
+      </div>
+      <div class="caption-bar">
+        <div class="caption-icon">📊</div>
+        <div class="caption-text">
+          <div class="caption-title">Live Stats</div>
+          <div class="caption-sub">Real performance data</div>
+        </div>
+        <span class="caption-badge">✓ LIVE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- [7] SWIGGY PANEL -->
+  <div class="bot-panel" id="panel-swiggy">
+    <div class="product-card">
+      <div class="product-header">
+        <img src="https://i.imgur.com/11WL7uf.jpeg" alt="Swiggy" class="product-logo" onerror="this.style.display='none';">
+        <span class="product-badge badge-orange">🍕 Grocery &amp; Food</span>
+      </div>
+      <h2 class="product-name">Swiggy Bot</h2>
+      <p class="product-desc">Launch your own 10-minute grocery delivery empire with a fully-featured, battle-tested bot.</p>
+      <ul class="feature-list">
+        <li><span class="check">✓</span> Full grocery/food catalog with categories &amp; search</li>
+        <li><span class="check">✓</span> Smart cart &amp; checkout flow</li>
+        <li><span class="check">✓</span> Automated rider dispatch system</li>
+        <li><span class="check">✓</span> Complete admin panel with order management</li>
+        <li><span class="check">✓</span> Real-time order tracking &amp; notifications</li>
+      </ul>
+      <div class="price-row">
+        <span class="price-label">One-time price</span>
+        <span class="price-value">1.5 TON</span>
+      </div>
+      <button class="buy-btn" id="buySwiggyBtn" onclick="buyProduct('swiggy')">💎 Buy Swiggy Bot via TON</button>
+      <div class="success-box" id="success-swiggy">
+        <div class="s-title">✅ Purchase Confirmed!</div>
+        <div class="s-sub">Your Swiggy Bot is ready.</div>
+        <a id="download-swiggy" class="success-link" href="#" target="_blank">🔗 Access Swiggy Bot Dashboard</a>
+      </div>
+    </div>
+
+    <div class="sub-heading">📸 Swiggy Proofs</div>
+
+    <!-- Swiggy Proof 1 -->
+    <div class="proof-card">
+      <img src="https://i.imgur.com/J8g0FlI.jpeg" loading="lazy" class="proof-img" alt="Swiggy Proof 1" style="width:100%; display:block; object-fit:cover; border-radius:14px; min-height:200px; background:#F0F0F0;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback" style="display:none; align-items:center; justify-content:center; flex-direction:column; height:200px; background:#F0F0F0; color:#999;">
+        <span>🍔</span>
+        <span class="fb-label">Image unavailable</span>
+      </div>
+      <div class="caption-bar">
+        <div class="caption-icon">🍔</div>
+        <div class="caption-text">
+          <div class="caption-title">Real Order Savings</div>
+          <div class="caption-sub">100₹ ka khana sirf 19₹ mai</div>
+        </div>
+        <span class="caption-badge">✓ REAL</span>
+      </div>
+    </div>
+
+    <!-- Swiggy Proof 2 -->
+    <div class="proof-card">
+      <img src="https://i.imgur.com/SPmJjbs.jpeg" loading="lazy" class="proof-img" alt="Swiggy Proof 2" style="width:100%; display:block; object-fit:cover; border-radius:14px; min-height:200px; background:#F0F0F0;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback" style="display:none; align-items:center; justify-content:center; flex-direction:column; height:200px; background:#F0F0F0; color:#999;">
+        <span>💰</span>
+        <span class="fb-label">Image unavailable</span>
+      </div>
+      <div class="caption-bar">
+        <div class="caption-icon">💰</div>
+        <div class="caption-text">
+          <div class="caption-title">Operator Earnings</div>
+          <div class="caption-sub">Verified monthly payout</div>
+        </div>
+        <span class="caption-badge">✓ REAL</span>
+      </div>
+    </div>
+
+    <!-- Swiggy Proof 3 -->
+    <div class="proof-card">
+      <img src="https://i.imgur.com/oPRNP61.jpeg" loading="lazy" class="proof-img" alt="Swiggy Proof 3" style="width:100%; display:block; object-fit:cover; border-radius:14px; min-height:200px; background:#F0F0F0;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+      <div class="img-fallback" style="display:none; align-items:center; justify-content:center; flex-direction:column; height:200px; background:#F0F0F0; color:#999;">
+        <span>📦</span>
+        <span class="fb-label">Image unavailable</span>
+      </div>
+      <div class="caption-bar">
+        <div class="caption-icon">📦</div>
+        <div class="caption-text">
+          <div class="caption-title">Live Delivery Log</div>
+          <div class="caption-sub">Order delivered · verified</div>
+        </div>
+        <span class="caption-badge">✓ LIVE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- [8] REAL CUSTOMER FEEDBACK -->
+  <div class="section-title">💬 Real Customer Feedback</div>
+
+  <div class="testimonial">
+    <div class="avatar">A</div>
+    <div class="t-body">
+      <div class="t-name">Aman K. · Swiggy Bot Operator</div>
+      <div class="t-text">Bhai ye toh 100% working hai! 150 ka khana sirf 35₹ mai aaya — screenshot bhi hai proof section me. Family shocked thi 😂</div>
+      <div class="t-stars">★★★★★</div>
+    </div>
+  </div>
+
+  <div class="testimonial">
+    <div class="avatar">P</div>
+    <div class="t-body">
+      <div class="t-name">Priya S. · Toing Bot Operator</div>
+      <div class="t-text">Trust kar liya bhai, ekdum legit hai. Pehle delivery 22 min me aayi thi, price bhi half. Ab roz order karti hoon Toing bot se.</div>
+      <div class="t-stars">★★★★★</div>
+    </div>
+  </div>
+
+  <div class="testimonial">
+    <div class="avatar">R</div>
+    <div class="t-body">
+      <div class="t-name">Rohit M. · Swiggy Bot Operator</div>
+      <div class="t-text">Mujhe laga tha fake hoga, but no — real Swiggy bot hai. 100₹ ka khana 19₹ mai mila, delivery boy bhi genuine aaya. Screenshot upload kar diya proof me.</div>
+      <div class="t-stars">★★★★★</div>
+    </div>
+  </div>
+
+  <div class="testimonial">
+    <div class="avatar">S</div>
+    <div class="t-body">
+      <div class="t-name">Sneha T. · Toing Bot Operator</div>
+      <div class="t-text">100% working hai bhai, 3 mahine se use kar rahi hoon. Kabhi kabhi 40-45₹ tak aata hai but still 60%+ savings guaranteed. Toing bot best hai.</div>
+      <div class="t-stars">★★★★★</div>
+    </div>
+  </div>
+
+  <div class="testimonial">
+    <div class="avatar">V</div>
+    <div class="t-body">
+      <div class="t-name">Vikram R. · Multi-Bot Operator</div>
+      <div class="t-text">Main dono bots use karta hoon. Swiggy bot me daily grocery, Toing bot me parcel deliveries — sab kuch real hai. Genuine proof dekh sakte ho.</div>
+      <div class="t-stars">★★★★★</div>
+    </div>
+  </div>
+
+  <!-- [9] FOOTER -->
+  <div class="footer">
+    <div>🔒 Secure TON payments · Instant delivery</div>
+    <div>Powered by <span class="orange">TON Connect</span> · Telegram Mini Apps</div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="overlay-text" id="overlayText">Processing payment...</div>
+  <div class="overlay-sub" id="overlaySub">Confirm in your wallet</div>
+</div>
+
+<script>
+  /* ============ CONFIG ============ */
+  const CONFIG = {
+    RECEIVER_WALLET: 'UQD...your_ton_wallet_address_here...',
+    SWIGGY_PRICE_TON: 1.5,
+    TOING_PRICE_TON: 2.0,
+    SWIGGY_DELIVERY_URL: 'https://t.me/YourSwiggyBotDeliveryBot?start=swiggy_license',
+    TOING_DELIVERY_URL: 'https://t.me/YourToingBotDeliveryBot?start=toing_license'
+  };
+
+  /* ============ TELEGRAM INIT ============ */
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor?.('#FFFFFF');
+    tg.setBackgroundColor?.('#FFFFFF');
+  }
+
+  /* ============ HAPTIC ============ */
+  function haptic(type) {
+    if (!tg?.HapticFeedback) return;
+    try {
+      if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+      else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+      else if (type === 'warning') tg.HapticFeedback.notificationOccurred('warning');
+      else if (type === 'tap') tg.HapticFeedback.impactOccurred('light');
+      else if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+      else if (type === 'heavy') tg.HapticFeedback.impactOccurred('heavy');
+    } catch(e) {}
+  }
+
+  /* ============ TOAST ============ */
+  let toastTimer = null;
+  function showToast(msg, dur = 2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), dur);
+  }
+
+  /* ============ BOT SELECTOR ============ */
+  function selectBot(bot) {
+    haptic('tap');
+    document.querySelectorAll('.bot-option').forEach(o => o.classList.remove('active'));
+    document.querySelectorAll('.bot-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('opt-' + bot).classList.add('active');
+    document.getElementById('panel-' + bot).classList.add('active');
+    localStorage.setItem('selected_bot', bot);
+  }
+
+  /* ============ TON CONNECT ============ */
+  let tonConnectUI = null, currentWallet = null;
+  function initTonConnect() {
+    if (typeof TON_CONNECT_UI === 'undefined') return;
+    try {
+      const manifest = 'data:application/json;base64,' + btoa(JSON.stringify({
+        url: window.location.origin || 'https://example.com',
+        name: 'Toing & Swiggy Bot Store',
+        iconUrl: 'https://ton.org/download/ton_symbol.png'
+      }));
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: manifest, uiPreferences: { theme: 'LIGHT' } });
+      tonConnectUI.onStatusChange((w) => {
+        currentWallet = w;
+        const btn = document.getElementById('walletBtn');
+        if (w) {
+          btn.textContent = (w.account?.address || '').slice(0, 4) + '...' + (w.account?.address || '').slice(-4);
+          btn.classList.add('connected');
+          haptic('success');
+        } else {
+          btn.textContent = 'Connect Wallet';
+          btn.classList.remove('connected');
+        }
+      });
+    } catch(e) { setTimeout(initTonConnect, 1000); }
+  }
+  if (typeof TON_CONNECT_UI !== 'undefined') initTonConnect();
+  else {
+    const iv = setInterval(() => {
+      if (typeof TON_CONNECT_UI !== 'undefined') { clearInterval(iv); initTonConnect(); }
+    }, 200);
+    setTimeout(() => clearInterval(iv), 10000);
+  }
+
+  /* ============ CONNECT WALLET ============ */
+  async function connectWallet() {
+    haptic('medium');
+    if (!tonConnectUI) { showToast('Wallet loading... retry'); return; }
+    if (currentWallet) { showToast('Wallet: ' + (currentWallet.account?.address?.slice(0, 8) || '') + '...'); return; }
+    try { await tonConnectUI.openModal(); }
+    catch(e) { showToast('Could not open wallet'); haptic('error'); }
+  }
+
+  /* ============ PURCHASE ============ */
+  let purchasing = false;
+  async function buyProduct(product) {
+    if (purchasing) return;
+    haptic('medium');
+    if (localStorage.getItem('purchased_' + product) === 'true') {
+      showToast('Already purchased');
+      revealSuccess(product);
+      return;
+    }
+    if (!tonConnectUI || !currentWallet) {
+      showToast('Connect wallet first');
+      haptic('error');
+      try { await tonConnectUI?.openModal(); } catch(e) {}
+      return;
+    }
+    if (!CONFIG.RECEIVER_WALLET || CONFIG.RECEIVER_WALLET.includes('your_ton_wallet')) {
+      showToast('⚠️ Configure RECEIVER_WALLET');
+      haptic('error');
+      return;
+    }
+    purchasing = true;
+    const btnId = product === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn';
+    const btn = document.getElementById(btnId);
+    const orig = btn.innerHTML;
+    btn.classList.add('loading');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Waiting...';
+    document.getElementById('overlay').classList.add('visible');
+    document.getElementById('overlayText').textContent = 'Processing payment...';
+    document.getElementById('overlaySub').textContent = 'Confirm in your wallet';
+    try {
+      const priceTON = product === 'swiggy' ? CONFIG.SWIGGY_PRICE_TON : CONFIG.TOING_PRICE_TON;
+      const amountNano = BigInt(Math.floor(priceTON * 1e9)).toString();
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [{ address: CONFIG.RECEIVER_WALLET, amount: amountNano }]
+      });
+      if (result && result.boc) handlePaymentSuccess(product);
+      else throw new Error('Transaction not confirmed');
+    } catch(err) {
+      document.getElementById('overlay').classList.remove('visible');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      purchasing = false;
+      const m = err?.message || 'cancelled';
+      if (m.toLowerCase().includes('cancel') || m.toLowerCase().includes('reject')) {
+        showToast('Transaction cancelled');
+        haptic('warning');
+      } else {
+        showToast('Payment failed: ' + m.slice(0, 60));
+        haptic('error');
+      }
+    }
+  }
+
+  /* ============ SUCCESS HANDLER ============ */
+  function handlePaymentSuccess(product) {
+    haptic('success');
+    haptic('heavy');
+    localStorage.setItem('purchased_' + product, 'true');
+    localStorage.setItem('purchased_' + product + '_date', new Date().toISOString());
+    document.getElementById('overlay').classList.remove('visible');
+    const btn = document.getElementById(product === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
+    btn.classList.remove('loading');
+    btn.disabled = true;
+    btn.innerHTML = '✅ Purchased';
+    revealSuccess(product);
+    showToast('🎉 Payment successful!');
+    if (tg && tg.sendData) {
+      try {
+        tg.sendData(JSON.stringify({
+          action: 'bot_purchase',
+          product: product,
+          price_ton: product === 'swiggy' ? CONFIG.SWIGGY_PRICE_TON : CONFIG.TOING_PRICE_TON,
+          timestamp: Date.now(),
+          status: 'success'
+        }));
+      } catch(e) {}
+    }
+    setTimeout(() => {
+      const url = product === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.TOING_DELIVERY_URL;
+      if (tg?.openLink) { try { tg.openLink(url, { try_instant_view: true }); } catch(e) { window.open(url, '_blank'); } }
+      else window.open(url, '_blank');
+    }, 1800);
+    purchasing = false;
+  }
+
+  /* ============ REVEAL SUCCESS ============ */
+  function revealSuccess(product) {
+    const box = document.getElementById('success-' + product);
+    if (box) box.classList.add('visible');
+    const btn = document.getElementById(product === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '✅ Purchased'; }
+    const link = document.getElementById('download-' + product);
+    if (link) link.href = product === 'swiggy' ? CONFIG.SWIGGY_DELIVERY_URL : CONFIG.TOING_DELIVERY_URL;
+  }
+
+  /* ============ DOMContentLoaded ============ */
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('selected_bot');
+    if (saved === 'swiggy' || saved === 'toing') {
+      selectBot(saved);
+    }
+    ['swiggy', 'toing'].forEach(p => {
+      if (localStorage.getItem('purchased_' + p) === 'true') revealSuccess(p);
+    });
+    if (tg?.BackButton) {
+      tg.BackButton.onClick(() => tg.close());
+      tg.BackButton.hide();
+    }
+  });
+
+  /* ============ OVERLAY CLICK ============ */
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === this && !purchasing) this.classList.remove('visible');
+  });
+</script>
+</body>
+</html>
