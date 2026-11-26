@@ -1,3 +1,4 @@
+```python
 #!/usr/bin/env python3
 """
 Toing & Swiggy Bot Store — Admin Bot (Render-ready with Flask)
@@ -311,7 +312,7 @@ def health():
 
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
-    flask_app.run(host="0.0.0.0", port=port, use_reloader=False)
+    flask_app.run(host="0.0.0.0", port=port, use_reloader=False, threaded=True)
 
 # ═══════════════════════════════════════════════════════════════
 # 🎬 MAIN
@@ -332,7 +333,8 @@ def main():
 
     threading.Thread(target=run_flask, daemon=True).start()
     print("✅ Bot running + Flask on PORT.")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, close_loop=False)
 
 if __name__ == "__main__":
     main()
+```
