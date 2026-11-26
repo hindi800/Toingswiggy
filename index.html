@@ -1231,9 +1231,8 @@
     PRICE_SWIGGY: 199,
     PRICE_COMBO: 299,
     
-    // 🎯 ADMIN BOT (YOUR CREDENTIALS)
-    BOT_TOKEN: '9032273740:AAGTWc8tSOvD0PxGLcrD4XzB5g4_Ls14JBg',
-    ADMIN_CHAT_ID: '6657235468',
+    // 🎯 RENDER WEBHOOK URL (Yahan apna Render URL daalo bina slash ke)
+    RENDER_WEBHOOK_URL: 'https://your-app-name.onrender.com/webhook',
     
     // Delivery URLs (bot links user receives after approval)
     TOING_DELIVERY_URL: 'https://t.me/YourToingBotDeliveryBot?start=toing_license',
@@ -1493,9 +1492,7 @@
     const userId = user.id || 'unknown';
     
     const amounts = { toing: CONFIG.PRICE_TOING, swiggy: CONFIG.PRICE_SWIGGY, combo: CONFIG.PRICE_COMBO };
-    const titles = { toing: 'Toing Bot', swiggy: 'Swiggy Bot', combo: 'Toing + Swiggy Combo' };
     const amount = amounts[product];
-    const productTitle = titles[product];
     
     // Save pending
     localStorage.setItem('pending_' + product, JSON.stringify({
@@ -1514,41 +1511,34 @@
       }));
     }
     
-    // Notify admin via Bot API
-    const message = `🔔 *NEW PAYMENT VERIFICATION*\n\n` +
-      `👤 *User:* ${userName}\n` +
-      `📱 *Username:* ${userUsername}\n` +
-      `🆔 *ID:* \`${userId}\`\n\n` +
-      `📦 *Product:* ${productTitle}\n` +
-      `💰 *Amount:* ₹${amount}\n` +
-      `🔢 *UTR:* \`${utr}\`\n\n` +
-      `⏰ *Time:* ${new Date().toLocaleString('en-IN')}\n\n` +
-      `✅ *After verifying in UPI app, send this bot:*\n` +
-      `/approve ${userId} ${product}`;
+    // Data to send to webhook
+    const payload = {
+      action: "verify_payment",
+      user_id: userId,
+      product: product,
+      utr: utr,
+      amount: amount,
+      user_name: userName,
+      username: userUsername
+    };
     
-    sendAdminNotification(message);
+    sendAdminNotification(payload);
     
     showPendingScreen();
     haptic('success');
   }
   
-  function sendAdminNotification(message) {
-    const url = 'https://api.telegram.org/bot' + CONFIG.BOT_TOKEN + '/sendMessage';
-    fetch(url, {
+  function sendAdminNotification(payload) {
+    // Direct Render Webhook Call (No token exposed)
+    fetch(CONFIG.RENDER_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CONFIG.ADMIN_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-      })
+      body: JSON.stringify(payload)
     })
     .then(r => r.json())
     .then(data => {
       console.log('✅ Admin notified:', data.ok);
-      if (!data.ok) {
-        showToast('⚠️ Notification issue. Contact support.');
-      }
+      if (!data.ok) showToast('⚠️ Notification issue. Contact support.');
     })
     .catch(err => {
       console.error('❌ Admin notify failed:', err);
@@ -1563,12 +1553,10 @@
   }
   
   function confirmUpiPayment() {
-    // Legacy - no longer used, kept for safety
     showUtrScreen();
   }
   
   function handlePaymentSuccess(product) {
-    // Only called after admin verification (via external /approve)
     haptic('success'); haptic('heavy');
     localStorage.setItem('verified_' + product, 'true');
     localStorage.setItem('verified_' + product + '_date', new Date().toISOString());
