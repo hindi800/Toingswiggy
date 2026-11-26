@@ -1,4 +1,3 @@
-```python
 #!/usr/bin/env python3
 """
 Toing & Swiggy Bot Store — Admin Bot (Render-ready with Flask)
@@ -337,4 +336,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
