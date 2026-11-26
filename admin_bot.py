@@ -24,8 +24,8 @@ from flask import Flask, request, jsonify
 # 🔧 CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
 
-BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN_HERE")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "YOUR_ADMIN_ID_HERE"))
+BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN", "9032273740:AAGTWc8tSOvD0PxGLcrD4XzB5g4_Ls14JBg")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", "6657235468"))
 
 DELIVERY_LINKS = {
     "toing": "https://t.me/YourToingBotDeliveryBot?start=toing_license",
