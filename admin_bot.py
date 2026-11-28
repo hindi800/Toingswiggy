@@ -19,6 +19,7 @@ from telegram.ext import (
     filters,
 )
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # ═══════════════════════════════════════════════════════════════
 # 🔧 CONFIGURATION
@@ -28,9 +29,8 @@ BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN", "9032273740:AAGTWc8tSOvD0PxGLcrD4Xz
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "6657235468"))
 
 DELIVERY_LINKS = {
-    "toing": "https://t.me/YourToingBotDeliveryBot?start=toing_license",
-    "swiggy": "https://t.me/YourSwiggyBotDeliveryBot?start=swiggy_license",
-    "combo": "https://t.me/YourComboDeliveryBot?start=combo_license",
+    "toing": "https://t.me/AaluToingBot",
+    "swiggy": "https://t.me/AaluSwiggyBot"
 }
 
 PRODUCT_NAMES = {
@@ -79,6 +79,78 @@ def is_admin(update: Update) -> bool:
     return bool(update.effective_user and update.effective_user.id == ADMIN_ID)
 
 # ═══════════════════════════════════════════════════════════════
+# 💬 DELIVERY MESSAGE GENERATOR (High-End English)
+# ═══════════════════════════════════════════════════════════════
+
+def get_delivery_message(product_key: str):
+    """Generates a professional message with instructions based on the product."""
+    
+    toing_guide = (
+        "ℹ️ *How to use Toing Bot*\n\n"
+        "1️⃣ Tap *Open Toing* to launch the mini-app.\n"
+        "2️⃣ Browse live restaurants and add dishes to cart.\n"
+        "3️⃣ Checkout to get instant Toing UPI payment QR.\n"
+        "4️⃣ Pay using GPay, PhonePe, or Paytm.\n\n"
+        "*Commands:*\n"
+        "• `/start` — Launch menu\n"
+        "• `/login` — Link Toing account\n"
+        "• `/mycode` — Get access code\n"
+        "• `/cancel` — Cancel current action"
+    )
+
+    swiggy_guide = (
+        "ℹ️ *How to use Swiggy Bot*\n\n"
+        "1️⃣ Tap *Open Swiggy* to launch the mini-app.\n"
+        "2️⃣ Browse live restaurants and add dishes to cart.\n"
+        "3️⃣ Checkout to get instant Swiggy UPI payment QR.\n"
+        "4️⃣ Pay using GPay, PhonePe, or Paytm.\n\n"
+        "*Commands:*\n"
+        "• `/start` — Launch menu\n"
+        "• `/login` — Link Swiggy account\n"
+        "• `/mycode` — Get access code\n"
+        "• `/cancel` — Cancel current action"
+    )
+
+    if product_key == "combo":
+        return (
+            "🎉 *Payment Verified Successfully!*\n\n"
+            "Thank you for purchasing the *Toing + Swiggy Combo*.\n"
+            f"💰 Amount Paid: ₹{PRICES['combo']}\n\n"
+            "🔗 *Your Access Links:*\n"
+            f"• Toing Bot: {DELIVERY_LINKS['toing']}\n"
+            f"• Swiggy Bot: {DELIVERY_LINKS['swiggy']}\n\n"
+            "────────────────────\n\n"
+            f"{toing_guide}\n\n"
+            "────────────────────\n\n"
+            f"{swiggy_guide}\n\n"
+            "⚠️ *Please save these links.*\n"
+            "For any support, contact: @toingstoreadminbot"
+        )
+    elif product_key == "toing":
+        return (
+            "🎉 *Payment Verified Successfully!*\n\n"
+            "Thank you for purchasing the *Toing Bot*.\n"
+            f"💰 Amount Paid: ₹{PRICES['toing']}\n\n"
+            f"🔗 *Your Access Link:*\n{DELIVERY_LINKS['toing']}\n\n"
+            "────────────────────\n\n"
+            f"{toing_guide}\n\n"
+            "⚠️ *Please save this link.*\n"
+            "For any support, contact: @toingstoreadminbot"
+        )
+    elif product_key == "swiggy":
+        return (
+            "🎉 *Payment Verified Successfully!*\n\n"
+            "Thank you for purchasing the *Swiggy Bot*.\n"
+            f"💰 Amount Paid: ₹{PRICES['swiggy']}\n\n"
+            f"🔗 *Your Access Link:*\n{DELIVERY_LINKS['swiggy']}\n\n"
+            "────────────────────\n\n"
+            f"{swiggy_guide}\n\n"
+            "⚠️ *Please save this link.*\n"
+            "For any support, contact: @toingstoreadminbot"
+        )
+    return "Error: Invalid Product."
+
+# ═══════════════════════════════════════════════════════════════
 # 🚀 COMMANDS & BUTTON HANDLERS
 # ═══════════════════════════════════════════════════════════════
 
@@ -88,76 +160,48 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text(
         "🤖 *Toing Admin Bot Ready*\n\n"
-        "Ab aapko manually type nahi karna hai. Jab bhi koi payment karega, aapko Approve/Reject ke buttons mil jayenge.\n\n"
+        "You will receive payment verification requests with Inline Buttons.\n\n"
         "Manual Commands:\n"
         "• `/pending` — list pending\n"
-        "• `/stats` — sales summary\n\n"
-        "Example:\n`/approve 6657235468 toing`",
+        "• `/stats` — sales summary\n"
+        "• `/approve <userId> <product>` — manual approve\n"
+        "• `/reject <userId> <product>` — manual reject",
         parse_mode="Markdown",
     )
-
-async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not is_admin(update):
-        return
-    await start(update, context)
 
 async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update):
         return
     args = context.args
     if len(args) < 2:
-        await update.message.reply_text(
-            "❌ Format: `/approve <userId> <product>`\nExample: `/approve 6657235468 toing`",
-            parse_mode="Markdown",
-        )
+        await update.message.reply_text("❌ Format: `/approve <userId> <product>`", parse_mode="Markdown")
         return
     try:
         user_id = int(args[0])
     except ValueError:
-        await update.message.reply_text("❌ Invalid userId. Numbers only.")
+        await update.message.reply_text("❌ Invalid userId.")
         return
     product = args[1].lower()
-    if product not in DELIVERY_LINKS:
+    if product not in PRODUCT_NAMES:
         await update.message.reply_text("❌ Invalid product. Use: toing, swiggy, combo")
         return
 
     db = load_db()
-    link = DELIVERY_LINKS[product]
-    product_name = PRODUCT_NAMES[product]
-    price = PRICES[product]
-
     db["verified"].append({
         "user_id": user_id,
         "product": product,
-        "amount": price,
+        "amount": PRICES.get(product, 0),
         "verified_at": datetime.now().isoformat(),
     })
     db["pending"] = [p for p in db["pending"] if not (p.get("user_id") == user_id and p.get("product") == product)]
     save_db(db)
 
     try:
-        await context.bot.send_message(
-            chat_id=user_id,
-            text=(
-                f"🎉 *Payment Verified!*\n\n"
-                f"✅ Product: *{product_name}*\n"
-                f"💰 Amount: ₹{price}\n\n"
-                f"🔗 *Your bot access link:*\n{link}\n\n"
-                f"⚠️ Save this link.\n"
-                f"Support: @toingstoreadminbot"
-            ),
-            parse_mode="Markdown",
-        )
-        await update.message.reply_text(
-            f"✅ Approved!\n• User: `{user_id}`\n• Product: {product_name}\n• Link delivered ✅",
-            parse_mode="Markdown",
-        )
+        msg = get_delivery_message(product)
+        await context.bot.send_message(chat_id=user_id, text=msg, parse_mode="Markdown")
+        await update.message.reply_text(f"✅ Approved manually for `{user_id}` ({product})", parse_mode="Markdown")
     except Exception as e:
-        await update.message.reply_text(
-            f"⚠️ Approved in DB but couldn't message `{user_id}`.\n"
-            f"Error: `{str(e)[:100]}`\n\nManually send:\n{link}",
-            parse_mode="Markdown",
-        )
+        await update.message.reply_text(f"⚠️ Approved in DB but failed to message `{user_id}`.\nError: {str(e)}", parse_mode="Markdown")
 
 async def reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update):
@@ -172,7 +216,7 @@ async def reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Invalid userId.")
         return
     product = args[1].lower()
-    if product not in DELIVERY_LINKS:
+    if product not in PRODUCT_NAMES:
         await update.message.reply_text("❌ Invalid product.")
         return
 
@@ -188,17 +232,13 @@ async def reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.send_message(
             chat_id=user_id,
-            text=(
-                "❌ *Payment Not Verified*\n\n"
-                "Aapka payment verify nahi ho paya.\n"
-                "Contact support: @toingstoreadminbot"
-            ),
+            text="❌ *Payment Not Verified*\n\nYour payment could not be verified.\nContact support: @toingstoreadminbot",
             parse_mode="Markdown",
         )
     except Exception:
         pass
 
-    await update.message.reply_text(f"✅ Rejected user `{user_id}` for {product}", parse_mode="Markdown")
+    await update.message.reply_text(f"✅ Rejected manually for `{user_id}` ({product})", parse_mode="Markdown")
 
 async def pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update):
@@ -215,7 +255,6 @@ async def pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"   UTR: `{p.get('utr', '?')}`\n"
             f"   Amount: ₹{p.get('amount', '?')}\n\n"
         )
-    text += "Use `/approve <userId> <product>` to deliver."
     await update.message.reply_text(text, parse_mode="Markdown")
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -247,7 +286,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles Approve/Reject Inline Button clicks"""
     query = update.callback_query
-    await query.answer()
+    await query.answer() # Acknowledge the button click
 
     if query.from_user.id != ADMIN_ID:
         await query.edit_message_text("⛔ Unauthorized.")
@@ -260,39 +299,25 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if action == "appr":
         db = load_db()
-        link = DELIVERY_LINKS[product]
-        product_name = PRODUCT_NAMES[product]
-        price = PRICES[product]
-
         db["verified"].append({
             "user_id": user_id,
             "product": product,
-            "amount": price,
+            "amount": PRICES.get(product, 0),
             "verified_at": datetime.now().isoformat(),
         })
         db["pending"] = [p for p in db["pending"] if not (p.get("user_id") == user_id and p.get("product") == product)]
         save_db(db)
 
         try:
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=(
-                    f"🎉 *Payment Verified!*\n\n"
-                    f"✅ Product: *{product_name}*\n"
-                    f"💰 Amount: ₹{price}\n\n"
-                    f"🔗 *Your bot access link:*\n{link}\n\n"
-                    f"⚠️ Save this link.\n"
-                    f"Support: @toingstoreadminbot"
-                ),
-                parse_mode="Markdown",
-            )
+            msg = get_delivery_message(product)
+            await context.bot.send_message(chat_id=user_id, text=msg, parse_mode="Markdown")
             await query.edit_message_text(
-                text=query.message.text + f"\n\n✅ *APPROVED BY YOU*\nLink delivered to user.*",
+                text=query.message.text + f"\n\n✅ *APPROVED*\nDelivery link sent to user successfully.*",
                 parse_mode="Markdown"
             )
         except Exception as e:
             await query.edit_message_text(
-                text=query.message.text + f"\n\n⚠️ *Approved in DB but user block/message failed.*\nError: {str(e)[:50]}\n\nSend manually:\n{link}",
+                text=query.message.text + f"\n\n⚠️ *Approved in DB but failed to send message to user.*\nError: {str(e)[:50]}",
                 parse_mode="Markdown"
             )
 
@@ -309,32 +334,30 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.send_message(
                 chat_id=user_id,
-                text=(
-                    "❌ *Payment Not Verified*\n\n"
-                    "Aapka payment verify nahi ho paya.\n"
-                    "Contact support: @toingstoreadminbot"
-                ),
+                text="❌ *Payment Not Verified*\n\nYour payment could not be verified.\nContact support: @toingstoreadminbot",
                 parse_mode="Markdown",
             )
             await query.edit_message_text(
-                text=query.message.text + f"\n\n❌ *REJECTED BY YOU*\nUser notified.*",
+                text=query.message.text + f"\n\n❌ *REJECTED*\nUser notified successfully.*",
                 parse_mode="Markdown"
             )
         except Exception:
             await query.edit_message_text(
-                text=query.message.text + f"\n\n❌ *REJECTED BY YOU*\n(User couldn't be messaged, but DB updated).*",
+                text=query.message.text + f"\n\n❌ *REJECTED*\n(User couldn't be notified, but DB updated).*",
                 parse_mode="Markdown"
             )
 
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_admin(update):
-        await update.message.reply_text("❓ Unknown command. Use `/help`.", parse_mode="Markdown")
+        await update.message.reply_text("❓ Unknown command. Use `/start`.", parse_mode="Markdown")
 
 # ═══════════════════════════════════════════════════════════════
 # 🌐 FLASK (Render keep-alive + webhook endpoint)
 # ═══════════════════════════════════════════════════════════════
 
 flask_app = Flask(__name__)
+CORS(flask_app) # 👈 FIXED: Added CORS for Webhook requests
+
 bot_loop = None
 bot_app = None
 
@@ -346,11 +369,7 @@ def health():
 @flask_app.route("/webhook", methods=["POST", "OPTIONS"])
 def webhook():
     if request.method == "OPTIONS":
-        resp = jsonify({"ok": True})
-        resp.headers["Access-Control-Allow-Origin"] = "*"
-        resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-        return resp, 200
+        return jsonify({"ok": True}), 200
 
     try:
         data = request.get_json(force=True, silent=True) or {}
@@ -358,9 +377,7 @@ def webhook():
         data = {}
 
     if data.get("action") != "verify_payment":
-        resp = jsonify({"ok": False, "error": "invalid action"})
-        resp.headers["Access-Control-Allow-Origin"] = "*"
-        return resp, 400
+        return jsonify({"ok": False, "error": "invalid action"}), 400
 
     user_id = data.get("user_id")
     product = str(data.get("product", "")).lower()
@@ -369,10 +386,8 @@ def webhook():
     user_name = data.get("user_name", "User")
     username = data.get("username", "")
 
-    if not user_id or product not in DELIVERY_LINKS:
-        resp = jsonify({"ok": False, "error": "invalid payload"})
-        resp.headers["Access-Control-Allow-Origin"] = "*"
-        return resp, 400
+    if not user_id or product not in PRODUCT_NAMES:
+        return jsonify({"ok": False, "error": "invalid payload"}), 400
 
     db = load_db()
     db["pending"].append({
@@ -397,7 +412,6 @@ def webhook():
         f"⏰ *Time:* {datetime.now().strftime('%d %b %Y, %I:%M %p')}"
     )
 
-    # Inline Buttons
     keyboard = [
         [
             InlineKeyboardButton("✅ Approve", callback_data=f"appr_{user_id}_{product}"),
@@ -421,9 +435,7 @@ def webhook():
     except Exception as e:
         print(f"Webhook notify error: {e}")
 
-    resp = jsonify({"ok": True})
-    resp.headers["Access-Control-Allow-Origin"] = "*"
-    return resp, 200
+    return jsonify({"ok": True}), 200
 
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
@@ -452,12 +464,14 @@ def main():
     bot_app = app
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CommandHandler("approve", approve))
     app.add_handler(CommandHandler("reject", reject))
     app.add_handler(CommandHandler("pending", pending))
     app.add_handler(CommandHandler("stats", stats))
+    
+    # 👈 FIXED: CallbackQueryHandler added for Buttons to work
     app.add_handler(CallbackQueryHandler(button_callback))
+    
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
 
     threading.Thread(target=run_flask, daemon=True).start()
