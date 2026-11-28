@@ -1231,13 +1231,12 @@
     PRICE_SWIGGY: 199,
     PRICE_COMBO: 299,
     
-    // 🎯 RENDER WEBHOOK URL (Yahan apna Render URL daalo bina slash ke)
+    // 🎯 RENDER WEBHOOK URL (Apna Render link yahan daalo)
     RENDER_WEBHOOK_URL: 'https://toingswiggy.onrender.com/webhook',
     
-    // Delivery URLs (bot links user receives after approval)
-    TOING_DELIVERY_URL: 'https://t.me/YourToingBotDeliveryBot?start=toing_license',
-    SWIGGY_DELIVERY_URL: 'https://t.me/YourSwiggyBotDeliveryBot?start=swiggy_license',
-    COMBO_DELIVERY_URL: 'https://t.me/YourComboDeliveryBot?start=combo_license',
+    // Delivery URLs (User ko approve hone ke baad ye link jayenge)
+    TOING_DELIVERY_URL: 'https://t.me/AaluToingBot',
+    SWIGGY_DELIVERY_URL: 'https://t.me/AaluSwiggyBot',
     
     // Support bot username (for FAB)
     SUPPORT_URL: 'https://t.me/toingstoreadminbot',
@@ -1408,14 +1407,12 @@
   function buyProduct(product) {
     haptic('medium');
     
-    // Already verified?
-    if (localStorage.getItem('verified_' + product) === 'true') {
+    if (localStorage.getItem('verified_' + product) === 'true' || (product === 'combo' && localStorage.getItem('verified_toing') === 'true' && localStorage.getItem('verified_swiggy') === 'true')) {
       showToast('Already verified! Access below.');
       revealSuccess(product);
       return;
     }
     
-    // Pending verification?
     const pending = localStorage.getItem('pending_' + product);
     if (pending) {
       try {
@@ -1494,14 +1491,12 @@
     const amounts = { toing: CONFIG.PRICE_TOING, swiggy: CONFIG.PRICE_SWIGGY, combo: CONFIG.PRICE_COMBO };
     const amount = amounts[product];
     
-    // Save pending
     localStorage.setItem('pending_' + product, JSON.stringify({
       utr, product, amount,
       timestamp: Date.now(),
       userId, userName, username: userUsername
     }));
     
-    // Save tg_user for backup
     if (user.id) {
       localStorage.setItem('tg_user', JSON.stringify({
         id: user.id,
@@ -1511,7 +1506,6 @@
       }));
     }
     
-    // Data to send to webhook
     const payload = {
       action: "verify_payment",
       user_id: userId,
@@ -1529,7 +1523,6 @@
   }
   
   function sendAdminNotification(payload) {
-    // Direct Render Webhook Call (No token exposed)
     fetch(CONFIG.RENDER_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1556,21 +1549,25 @@
     showUtrScreen();
   }
   
-  function handlePaymentSuccess(product) {
-    haptic('success'); haptic('heavy');
-    localStorage.setItem('verified_' + product, 'true');
-    localStorage.setItem('verified_' + product + '_date', new Date().toISOString());
-    localStorage.removeItem('pending_' + product);
-    revealSuccess(product);
-    showToast('🎉 Payment verified! Access unlocked.');
+  // Poll for verification (Auto-update UI when Admin approves)
+  function startStatusPolling(product) {
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      // Yahan hum backend se check kar sakte hain, but filhal hum LocalStorage verify kar rahe hain
+      // Ideally, backend should push a response. Since HTML is static, we assume admin approves within 10 mins.
+      // For now, manual refresh works.
+      if (attempts > 20) clearInterval(interval);
+    }, 30000);
   }
   
   function revealSuccess(product) {
     const isVerified = (p) => localStorage.getItem('verified_' + p) === 'true' || localStorage.getItem('verified_combo') === 'true';
     
-    if (product === 'combo') {
+    if (product === 'combo' || isVerified('combo')) {
+      localStorage.setItem('verified_toing', 'true');
+      localStorage.setItem('verified_swiggy', 'true');
       ['toing','swiggy'].forEach(p => {
-        if (!isVerified(p)) return;
         const box = document.getElementById('success-' + p);
         if (box) box.classList.add('visible');
         const b = document.getElementById(p === 'swiggy' ? 'buySwiggyBtn' : 'buyToingBtn');
@@ -1614,12 +1611,10 @@
     const saved = localStorage.getItem('selected_bot');
     if (saved === 'swiggy' || saved === 'toing') selectBot(saved);
     
-    // Restore verified
     ['toing', 'swiggy', 'combo'].forEach(p => {
       if (localStorage.getItem('verified_' + p) === 'true') revealSuccess(p);
     });
     
-    // Show pending state on buttons
     ['toing', 'swiggy', 'combo'].forEach(p => {
       const pending = localStorage.getItem('pending_' + p);
       if (pending) {
@@ -1656,7 +1651,6 @@
     }, 3500);
   });
   
-  // ⚡ IMMEDIATE TELEGRAM USER INIT
   function bootTelegramUser() {
     initTelegramUser();
     setTimeout(initTelegramUser, 300);
@@ -1668,10 +1662,9 @@
     bootTelegramUser();
   }
 
-  /* ============ OVERLAY CLICK ============ */
   document.getElementById('overlay').addEventListener('click', function(e) {
     if (e.target === this && !purchasing) this.classList.remove('visible');
   });
 </script>
 </body>
-</html>
+ </html>
